@@ -63,12 +63,7 @@ function setIntersectionSize(a, b) {
   return n;
 }
 
-export function predictRelevant(
-  currentDescription,
-  currentDate,
-  priorDescription,
-  priorDate,
-) {
+function extractFeatures(currentDescription, currentDate, priorDescription, priorDate) {
   const currentTokens = tokens(currentDescription);
   const priorTokens = tokens(priorDescription);
   const tokenOverlap = setIntersectionSize(currentTokens, priorTokens);
@@ -76,18 +71,58 @@ export function predictRelevant(
   const priorModality = modality(priorDescription);
   const sameModality = currentModality === priorModality;
   const ageYears = yearDelta(currentDate, priorDate);
+  return { tokenOverlap, currentModality, sameModality, ageYears };
+}
 
-  if (sameModality && tokenOverlap >= 1) return true;
-  if (tokenOverlap >= 2 && ageYears != null && ageYears <= 2.0) return true;
-  if (
-    sameModality &&
-    HIGH_RELEVANCE_MODALITIES.has(currentModality) &&
-    ageYears != null &&
-    ageYears <= 5.0
-  ) {
-    return true;
+export const RULE_VARIANTS = {
+  modality_only: "modality_only",
+  overlap_only: "overlap_only",
+  date_only: "date_only",
+  combined: "combined",
+};
+
+export function predictRelevant(
+  currentDescription,
+  currentDate,
+  priorDescription,
+  priorDate,
+  variant = RULE_VARIANTS.combined,
+) {
+  const { tokenOverlap, currentModality, sameModality, ageYears } = extractFeatures(
+    currentDescription,
+    currentDate,
+    priorDescription,
+    priorDate,
+  );
+
+  if (variant === RULE_VARIANTS.modality_only) {
+    return sameModality && tokenOverlap >= 1;
   }
-  return false;
+  if (variant === RULE_VARIANTS.overlap_only) {
+    return tokenOverlap >= 2;
+  }
+  if (variant === RULE_VARIANTS.date_only) {
+    return (
+      sameModality &&
+      HIGH_RELEVANCE_MODALITIES.has(currentModality) &&
+      ageYears != null &&
+      ageYears <= 5.0
+    );
+  }
+  if (variant === RULE_VARIANTS.combined) {
+    if (sameModality && tokenOverlap >= 1) return true;
+    if (tokenOverlap >= 2 && ageYears != null && ageYears <= 2.0) return true;
+    if (
+      sameModality &&
+      HIGH_RELEVANCE_MODALITIES.has(currentModality) &&
+      ageYears != null &&
+      ageYears <= 5.0
+    ) {
+      return true;
+    }
+    return false;
+  }
+  throw new Error(`Unknown rule variant: ${variant}`);
 }
 
 export function scoreCase(currentStudy, priorStudies) {

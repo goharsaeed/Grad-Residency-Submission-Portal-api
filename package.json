@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "test:api": "node scripts/test-api.mjs"
+    "test:api": "node scripts/test-api.mjs",
+    "eval:ablations": "node scripts/eval-ablations.mjs"
   },
   "engines": {
     "node": ">=18"

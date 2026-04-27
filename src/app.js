@@ -1,6 +1,9 @@
 import express from "express";
-import { randomBytes } from "crypto";
-import { scoreCase } from "./model.js";
+import {
+  PREDICT_HELP_RESPONSE,
+  predictFromBody,
+  validatePredictBody,
+} from "./predict-service.js";
 
 const app = express();
 app.use(express.json({ limit: "100mb" }));
@@ -43,55 +46,19 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/predict", (_req, res) => {
-  res.json({
-    endpoint: "/predict",
-    method: "POST",
-    content_type: "application/json",
-    detail: "Send a JSON body including a top-level \"cases\" array.",
-    example: {
-      cases: [
-        {
-          case_id: "case-1",
-          current_study: {},
-          prior_studies: [{ study_id: "prior-1" }],
-        },
-      ],
-    },
-  });
+  res.json(PREDICT_HELP_RESPONSE);
 });
 
 function handlePredict(req, res) {
-  const requestId = randomBytes(6).toString("hex");
   const body = req.body ?? {};
-  const challengeId = body.challenge_id ?? "relevant-priors-v1";
-  const schemaVersion = body.schema_version ?? 1;
-  const cases = body.cases;
-
-  if (!Array.isArray(cases)) {
-    return res.status(400).json({ error: "cases must be an array" });
+  const validation = validatePredictBody(body);
+  if (!validation.ok) {
+    return res.status(400).json({
+      error: "Invalid request body",
+      details: validation.errors,
+    });
   }
-
-  console.log(
-    `[predict] request_id=${requestId} challenge_id=${challengeId} schema_version=${schemaVersion} case_count=${cases.length}`,
-  );
-
-  const predictions = [];
-  for (const c of cases) {
-    const priors = Array.isArray(c.prior_studies) ? c.prior_studies : [];
-    console.log(
-      `[predict] request_id=${requestId} case_id=${c.case_id} prior_count=${priors.length}`,
-    );
-    const casePreds = scoreCase(c.current_study, priors);
-    for (const item of casePreds) {
-      predictions.push({
-        case_id: String(c.case_id),
-        study_id: String(item.study_id),
-        predicted_is_relevant: Boolean(item.predicted_is_relevant),
-      });
-    }
-  }
-
-  res.json({ predictions });
+  return res.json(predictFromBody(body));
 }
 
 // Support both /predict and / as POST targets for external evaluators.

@@ -26,11 +26,22 @@ A prior is marked relevant if any condition is true:
 
 ## Evaluation
 
-On `relevant_priors_public.json`:
+On `relevant_priors_public.json` (`truth_count = 27,614`):
 
-- Accuracy: approximately `0.78`
-- Metric interpretation: `correct / (correct + incorrect)` with missing predictions counted as incorrect
+- Metric: `correct / (correct + incorrect)` with missing predictions counted as incorrect
 - No tuning on hidden/private split (to avoid leakage)
+- Repro command: `npm run eval:ablations`
+
+### Ablation results (exact)
+
+| Variant | Correct | Incorrect | Total | Accuracy |
+|---|---:|---:|---:|---:|
+| modality-only | 21,411 | 6,203 | 27,614 | 0.775368 |
+| overlap-only | 22,975 | 4,639 | 27,614 | 0.832006 |
+| date-only | 21,425 | 6,189 | 27,614 | 0.775875 |
+| combined (final API) | 21,599 | 6,015 | 27,614 | 0.782176 |
+
+Interpretation: overlap signal is strongest in isolation on the public split, while the combined rule set was selected for broader behavior stability and modality/date robustness.
 
 ## Operational Notes
 
@@ -38,6 +49,7 @@ On `relevant_priors_public.json`:
 - Deterministic output for identical inputs
 - Endpoint compatibility for both `POST /predict` and `POST /` to reduce deployment/evaluator path mismatch risk
 - Lightweight logs for run traceability (`request_id`, case counts, per-case prior counts)
+- Strict request validation for malformed case structures, missing ids, and invalid date formats
 
 ## What Worked Well
 

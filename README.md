@@ -1,57 +1,118 @@
 # Relevant Priors API
 
-Node.js + Express service: `POST /predict` returns one `predicted_is_relevant` boolean per prior study.
+Node.js API for the challenge evaluator. The prediction contract is:
 
-## Run
+- Input: cases with one current study + many prior studies
+- Output: one boolean `predicted_is_relevant` per prior study
 
-Requires Node.js 18+.
+## Assessment Submission
+
+Use the base deployment URL as the endpoint:
+
+- `https://grad-residency-submission-portal.netlify.app`
+
+Evaluator compatibility is built in:
+
+- `POST /predict` (primary route)
+- `POST /` (fallback alias for evaluators that post to root)
+- trailing slash variants are accepted
+
+## Requirements
+
+- Node.js 18+
+- npm
+
+## Quick Start (Localhost)
 
 ```bash
 npm install
 npm start
 ```
 
-Default: `http://localhost:8000`. **`GET /`** returns a short HTML page with links. **`GET /health`** returns JSON `{"status":"ok"}`. Fixed port: `PORT=3000 npm start`. If `PORT` is **not** set and 8000 is already in use, the server tries 8001, 8002, … up to 8049 and logs which port it took.
+Default server URL is `http://localhost:8000`.
 
-`/predict` expects **`POST`** with `Content-Type: application/json` and a body containing `cases` (see challenge spec). A `GET` to `/predict` returns a help JSON that shows how to call the endpoint.
+If `PORT` is not set and `8000` is busy, the app automatically tries the next ports (`8001` ... `8049`).
 
-## Request / response
+Set a fixed port if needed:
 
-Top-level fields `challenge_id`, `schema_version`, `generated_at` are accepted; `cases` is required. Each case has `case_id`, `current_study`, `prior_studies` (and optional `patient_id`, `patient_name`).
+```bash
+PORT=3000 npm start
+```
 
-Response: `{ "predictions": [ { "case_id", "study_id", "predicted_is_relevant" } ] }` — one entry per prior, any order.
+## Endpoints
 
-JSON body limit is raised for large batches.
+- `GET /` - small API landing page with test links
+- `GET /health` - readiness response: `{"status":"ok"}`
+- `GET /predict` - help JSON with request format example
+- `POST /predict` - main inference endpoint
+- `POST /` - compatibility alias for evaluators that post to root
 
-## Logs
+## Request Schema (POST)
 
-Each request logs a request id, `challenge_id`, `schema_version`, case count, and per-case prior count.
+The API accepts a top-level JSON object containing:
 
-## Browser console (Chrome)
+- `cases` (required)
+- `challenge_id`, `schema_version`, `generated_at` (optional passthrough metadata)
 
-Optional requests (`/favicon.ico`, `/.well-known/.../com.chrome.devtools.json`) are answered so you do not get 404s from this server. Any remaining **CSP** line in DevTools usually comes from **Chrome’s UI**, not this app.
+Each case should include:
 
-## Verify API locally
+- `case_id`
+- `current_study`
+- `prior_studies` (array)
+- optional identifiers such as `patient_id`, `patient_name`
+
+## Response Schema
+
+The response always follows:
+
+```json
+{
+  "predictions": [
+    {
+      "case_id": "string",
+      "study_id": "string",
+      "predicted_is_relevant": true
+    }
+  ]
+}
+```
+
+Exactly one prediction is returned for each input prior study.
+
+## Local Verification
+
+Run the local regression checks:
 
 ```bash
 npm run test:api
 ```
 
-Starts the server on port **19287** (override with `TEST_PORT=19999 npm run test:api`), checks `GET /health`, `POST /predict` with two priors, and `POST /predict` with an invalid body (expects **400**).
+This test suite verifies:
 
-## Zip / deploy
+- `GET /health`
+- valid `POST /predict`
+- invalid request shape returns `400`
 
-After `npm install`, ship **source + `package-lock.json`**; omit **`node_modules`**. Include `relevant_priors_public.json` only if you want offline evaluation in the archive.
+## Deployment Notes
 
-### Localhost quick start (from extracted zip)
+This repository is configured for Netlify Functions. For assessment submission:
 
-```bash
-npm install
-npm start
-```
+- Submit the base site URL (do not append `/predict` unless explicitly required)
+- Do not include `node_modules` in zipped materials
+- Include source files and `package-lock.json`
 
-Then open:
+### Final pre-submit checklist
 
-- `http://localhost:8000/`
-- `http://localhost:8000/health`
-- `http://localhost:8000/predict` (help response for browser testing)
+- `GET /health` returns `200` and `{"status":"ok"}`
+- `GET /predict` returns request help JSON
+- `POST /predict` returns `{"predictions":[...]}`
+- same `POST` request also works on `/` for evaluator compatibility
+
+## Logging
+
+For each inference request, logs include:
+
+- generated request id
+- `challenge_id` and `schema_version`
+- total case count
+- per-case prior count

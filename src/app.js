@@ -60,7 +60,7 @@ app.get("/predict", (_req, res) => {
   });
 });
 
-app.post("/predict", (req, res) => {
+function handlePredict(req, res) {
   const requestId = randomBytes(6).toString("hex");
   const body = req.body ?? {};
   const challengeId = body.challenge_id ?? "relevant-priors-v1";
@@ -92,6 +92,9 @@ app.post("/predict", (req, res) => {
   }
 
   res.json({ predictions });
-});
+}
+
+// Support both /predict and / as POST targets for external evaluators.
+app.post(["/predict", "/"], handlePredict);
 
 export default app;

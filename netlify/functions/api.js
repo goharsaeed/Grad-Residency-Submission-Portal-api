@@ -59,16 +59,21 @@ function apiHomePage() {
 function routePath(event) {
   const path = event.path || "/";
   const prefix = "/.netlify/functions/api";
+  const normalize = (rawPath) => {
+    if (!rawPath || rawPath === "/") return "/";
+    return rawPath.endsWith("/") ? rawPath.slice(0, -1) : rawPath;
+  };
   if (path.startsWith(prefix)) {
     const stripped = path.slice(prefix.length);
-    return stripped || "/";
+    return normalize(stripped || "/");
   }
-  return path;
+  return normalize(path);
 }
 
 export const handler = async (event) => {
   const method = event.httpMethod || "GET";
   const path = routePath(event);
+  const isPredictPath = path === "/predict" || path === "/";
 
   if (method === "GET" && path === "/favicon.ico") {
     return { statusCode: 204, body: "" };
@@ -104,7 +109,8 @@ export const handler = async (event) => {
     });
   }
 
-  if (method === "POST" && path === "/predict") {
+  // Accept both POST /predict and POST / for external evaluators.
+  if (method === "POST" && isPredictPath) {
     const body = parseBody(event.body);
     if (!body) {
       return json(400, { error: "Invalid JSON body" });

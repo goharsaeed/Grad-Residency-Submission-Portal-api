@@ -27,12 +27,13 @@ app.get("/", (_req, res) => {
 </head>
 <body>
   <h1>Relevant Priors API</h1>
-  <p>This server is running. Use the routes below.</p>
+  <p>This server is running. Test both endpoints below.</p>
   <ul>
     <li><a href="/health"><code>GET /health</code></a> — JSON liveness check</li>
-    <li><code>POST /predict</code> — JSON body with <code>cases</code> (evaluator / curl / Postman). Not available from the address bar.</li>
+    <li><a href="/predict"><code>GET /predict</code></a> — help JSON with request format</li>
+    <li><code>POST /predict</code> — actual prediction endpoint for evaluator / curl / Postman</li>
   </ul>
-  <p>If you opened this page by mistake: bookmark <a href="/health">/health</a> for a quick check.</p>
+  <p>Open <a href="/predict">/predict</a> in browser to see a sample payload, then send the same shape to <code>POST /predict</code>.</p>
 </body>
 </html>`);
 });

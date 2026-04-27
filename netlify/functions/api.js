@@ -85,15 +85,21 @@ export const handler = async (event) => {
   }
 
   if (method === "GET" && path === "/predict") {
-    return json(
-      405,
-      {
-        error: "Method not allowed",
-        detail:
-          "Use POST with Content-Type: application/json and a JSON body including \"cases\".",
+    return json(200, {
+      endpoint: "/predict",
+      method: "POST",
+      content_type: "application/json",
+      detail: "Send a JSON body including a top-level \"cases\" array.",
+      example: {
+        cases: [
+          {
+            case_id: "case-1",
+            current_study: {},
+            prior_studies: [{ study_id: "prior-1" }],
+          },
+        ],
       },
-      { Allow: "POST" },
-    );
+    });
   }
 
   if (method === "POST" && path === "/predict") {

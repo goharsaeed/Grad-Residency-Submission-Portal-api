@@ -42,11 +42,20 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/predict", (_req, res) => {
-  res.set("Allow", "POST");
-  res.status(405).json({
-    error: "Method not allowed",
-    detail:
-      "Use POST with Content-Type: application/json and a JSON body including \"cases\".",
+  res.json({
+    endpoint: "/predict",
+    method: "POST",
+    content_type: "application/json",
+    detail: "Send a JSON body including a top-level \"cases\" array.",
+    example: {
+      cases: [
+        {
+          case_id: "case-1",
+          current_study: {},
+          prior_studies: [{ study_id: "prior-1" }],
+        },
+      ],
+    },
   });
 });
 

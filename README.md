@@ -13,7 +13,7 @@ npm start
 
 Default: `http://localhost:8000`. **`GET /`** returns a short HTML page with links. **`GET /health`** returns JSON `{"status":"ok"}`. Fixed port: `PORT=3000 npm start`. If `PORT` is **not** set and 8000 is already in use, the server tries 8001, 8002, … up to 8049 and logs which port it took.
 
-`/predict` expects **`POST`** with `Content-Type: application/json` and a body containing `cases` (see challenge spec). A `GET` to `/predict` returns **405** with a short message.
+`/predict` expects **`POST`** with `Content-Type: application/json` and a body containing `cases` (see challenge spec). A `GET` to `/predict` returns a help JSON that shows how to call the endpoint.
 
 ## Request / response
 
@@ -42,3 +42,16 @@ Starts the server on port **19287** (override with `TEST_PORT=19999 npm run test
 ## Zip / deploy
 
 After `npm install`, ship **source + `package-lock.json`**; omit **`node_modules`**. Include `relevant_priors_public.json` only if you want offline evaluation in the archive.
+
+### Localhost quick start (from extracted zip)
+
+```bash
+npm install
+npm start
+```
+
+Then open:
+
+- `http://localhost:8000/`
+- `http://localhost:8000/health`
+- `http://localhost:8000/predict` (help response for browser testing)
